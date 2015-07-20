@@ -1,12 +1,11 @@
 package net.hardcodes.neuroid.ui;
 
+import android.app.ActionBar;
 import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,14 +13,9 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import net.hardcodes.neuroid.R;
-import net.hardcodes.neuroid.core.NeuralNetwork;
-import net.hardcodes.neuroid.imgrec.samples.ImageRecognitionSample;
-import net.hardcodes.neuroid.imgrec.samples.RGBImageRecognitionTrainingSample;
-
-import java.io.IOException;
 
 
-public class DemoActivity extends ActionBarActivity
+public class DemoActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
 
     /**
@@ -40,26 +34,19 @@ public class DemoActivity extends ActionBarActivity
         setContentView(R.layout.activity_demo);
 
         mNavigationDrawerFragment = (NavigationDrawerFragment)
-                getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
+                getFragmentManager().findFragmentById(R.id.navigation_drawer);
         mTitle = getTitle();
 
         // Set up the drawer.
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
-
-        NeuralNetwork neuralNetwork = null;
-        try {
-            neuralNetwork = RGBImageRecognitionTrainingSample.train(this);
-        } catch (IOException e) {
-        }
-        ImageRecognitionSample.recognize(neuralNetwork);
     }
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
-        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentManager fragmentManager = getFragmentManager();
         fragmentManager.beginTransaction()
                 .replace(R.id.container, PlaceholderFragment.newInstance(position + 1))
                 .commit();
@@ -76,11 +63,14 @@ public class DemoActivity extends ActionBarActivity
             case 3:
                 mTitle = getString(R.string.title_section3);
                 break;
+            case 4:
+                mTitle = getString(R.string.title_section4);
+                break;
         }
     }
 
     public void restoreActionBar() {
-        ActionBar actionBar = getSupportActionBar();
+        ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
         actionBar.setDisplayShowTitleEnabled(true);
         actionBar.setTitle(mTitle);
@@ -144,6 +134,10 @@ public class DemoActivity extends ActionBarActivity
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_demo, container, false);
+            switch (getArguments().getInt(ARG_SECTION_NUMBER)) {
+                case 1:
+                    return new ImageRecognitionManager(inflater, container).getContents();
+            }
             return rootView;
         }
 

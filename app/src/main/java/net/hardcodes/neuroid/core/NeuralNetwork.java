@@ -358,13 +358,13 @@ public class NeuralNetwork<L extends LearningRule> implements Serializable {
      * @param trainingSet set of training elements to learn
      */
     public void learnInNewThread(final DataSet trainingSet) {
-        learningThread = new Thread() {
+        learningThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 learningRule.learn(trainingSet);
             }
-        };
-        learningThread.setName("NeurophLearningThread");
+        });
+        learningThread.setName("NeuroidLearningThread");
         learningThread.start();
     }
 
