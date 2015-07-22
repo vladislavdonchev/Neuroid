@@ -51,9 +51,6 @@ public class ImageFilesIterator implements Iterator<File> {
             throw new IllegalArgumentException(dir + " is not a directory!");
         }
         Log.d("IMGS", "GO! " +  dir.canRead() + " " + dir.getAbsolutePath());
-        for (String fileName: dir.list()) {
-            Log.d("IMGS", fileName);
-        }
 
         String[] imageFilenames = dir.list(new FilenameFilter() {
             public boolean accept(File dir, String name) {

@@ -39,7 +39,7 @@ public class ImageAndroid implements Image {
     }
 
     public ImageAndroid(ImageAndroid image) {
-        bitmap = image.getBitmap().copy(image.getBitmap().getConfig(), true);
+        bitmap = Bitmap.createBitmap(image.getBitmap());
     }
 
     public ImageAndroid(ImageAndroid image, int width, int height) {
@@ -104,7 +104,7 @@ public class ImageAndroid implements Image {
     }
 
     @Override
-    public Image resize(int width, int height) {
+    public ImageAndroid resize(int width, int height) {
         bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
         return new ImageAndroid( bitmap);
     }
@@ -114,7 +114,7 @@ public class ImageAndroid implements Image {
         return new ImageAndroid(Bitmap.createBitmap(bitmap, x1, y1, x2 - x1, y2 - y1));
     }
 
-    public static Image padSquare(ImageAndroid source) {
+    public static ImageAndroid padSquare(ImageAndroid source) {
         int w = source.getWidth();
         int h = source.getHeight();
         int newW = w > h ? w : h;

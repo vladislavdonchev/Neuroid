@@ -206,50 +206,50 @@ public class ImageSampler
 //	private static void waitForVerticalScreenRefresh()
 //	{
 //		Toolkit.getDefaultToolkit().sync();
+////	}
+//
+//	public static Image downSampleImage(Dimension samplingResolution,
+//			Image bigImage, int returnImageType) {
+//		int inspectX;
+//		int inspectY;
+//		int numberOfSamplesAcross = samplingResolution.getWidth();
+//		int numberOfSamplesDown = samplingResolution.getHeight();
+//
+//		if(bigImage.getWidth() <= numberOfSamplesAcross || bigImage.getHeight() <= numberOfSamplesDown) {
+//			return bigImage;
+//		}
+//
+//		Image image = ImageFactory.createImage(bigImage, new Integer(numberOfSamplesAcross), new Integer(numberOfSamplesDown), new Integer(returnImageType));
+//
+//		double samplingIncrementX = bigImage.getWidth() / (samplingResolution.getWidth() - 1);
+//		double samplingIncrementY = bigImage.getHeight() / (samplingResolution.getHeight() - 1);
+//
+//		double sampleX = 0;
+//		double sampleY = 0;
+//		for(int y=0; y < numberOfSamplesDown; y++) {
+//			for(int x=0; x < numberOfSamplesAcross; x++) {
+//				inspectX = (int) Math.round(sampleX);
+//				inspectY = (int) Math.round(sampleY);
+//
+//				if(inspectX >= bigImage.getWidth()) {
+//					inspectX = bigImage.getWidth() - 1;
+//				}
+//				if(inspectY >= bigImage.getHeight()) {
+//					inspectY = bigImage.getHeight() - 1;
+//				}
+//				int color = bigImage.getPixel(inspectX, inspectY);
+//				image.setPixel(x, y, color);
+//				sampleX+=samplingIncrementX;
+//			}
+//			sampleX=0;
+//			sampleY+=samplingIncrementY;
+//		}
+//
+//		return image;
 //	}
-    
-	public static Image downSampleImage(Dimension samplingResolution,
-			Image bigImage, int returnImageType) {
-		int inspectX;
-		int inspectY;
-		int numberOfSamplesAcross = samplingResolution.getWidth();
-		int numberOfSamplesDown = samplingResolution.getHeight();
-		
-		if(bigImage.getWidth() <= numberOfSamplesAcross || bigImage.getHeight() <= numberOfSamplesDown) {
-			return bigImage;
-		}
-		
-		Image image = ImageFactory.createImage(bigImage, new Integer(numberOfSamplesAcross), new Integer(numberOfSamplesDown), new Integer(returnImageType));
-		
-		double samplingIncrementX = bigImage.getWidth() / (samplingResolution.getWidth() - 1);
-		double samplingIncrementY = bigImage.getHeight() / (samplingResolution.getHeight() - 1);
-		
-		double sampleX = 0;
-		double sampleY = 0;
-		for(int y=0; y < numberOfSamplesDown; y++) {
-			for(int x=0; x < numberOfSamplesAcross; x++) {
-				inspectX = (int) Math.round(sampleX);
-				inspectY = (int) Math.round(sampleY);
-				
-				if(inspectX >= bigImage.getWidth()) {
-					inspectX = bigImage.getWidth() - 1;
-				}
-				if(inspectY >= bigImage.getHeight()) {
-					inspectY = bigImage.getHeight() - 1;
-				}
-				int color = bigImage.getPixel(inspectX, inspectY);
-				image.setPixel(x, y, color);
-				sampleX+=samplingIncrementX;
-			}
-			sampleX=0;
-			sampleY+=samplingIncrementY;
-		}
-		
-		return image;
-	}    
-        
-	public static Image downSampleImage(Dimension samplingResolution, Image image) {
-		return downSampleImage(samplingResolution, image, ImageType.ANDROID_TYPE_RGB_565);
-	}        
+//
+//	public static Image downSampleImage(Dimension samplingResolution, Image image) {
+//		return downSampleImage(samplingResolution, image, ImageType.ANDROID_TYPE_RGB_565);
+//	}
     
 }

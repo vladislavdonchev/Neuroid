@@ -55,18 +55,39 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/fragment_image_recognition_nn_name_label"
                 android:layout_marginTop="20dp"
-                android:text="Hidden Layers:" />
+                android:text="Layers x Neurons:" />
 
-            <EditText
-                android:id="@+id/fragment_image_recognition_nn_hidden"
+            <LinearLayout
                 android:layout_width="200dp"
                 android:layout_height="wrap_content"
-                android:layout_alignBaseline="@id/fragment_image_recognition_nn_hidden_label"
                 android:layout_alignParentRight="true"
-                android:gravity="center"
-                android:inputType="number"
-                android:text="8"
-                android:textSize="16sp" />
+                android:layout_marginTop="10dp"
+                android:layout_below="@id/fragment_image_recognition_nn_name_label"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/fragment_image_recognition_nn_hidden"
+                    android:layout_width="64dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="1"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="x" />
+
+                <EditText
+                    android:id="@+id/fragment_image_recognition_nn_neuron"
+                    android:layout_width="64dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="48"
+                    android:textSize="16sp" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/fragment_image_recognition_nn_sample_label"
@@ -80,6 +101,7 @@
                 android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
+                android:layout_marginTop="10dp"
                 android:layout_below="@id/fragment_image_recognition_nn_hidden_label"
                 android:orientation="horizontal">
 
@@ -89,11 +111,10 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:inputType="number"
-                    android:text="64"
+                    android:text="48"
                     android:textSize="16sp" />
 
                 <TextView
-                    android:id="@+id/fragment_image_recognition_nn_sample_x"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="x" />
@@ -104,7 +125,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:inputType="number"
-                    android:text="64"
+                    android:text="48"
                     android:textSize="16sp" />
             </LinearLayout>
         </RelativeLayout>

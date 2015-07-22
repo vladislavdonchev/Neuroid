@@ -2,7 +2,6 @@ package net.hardcodes.neuroid.ui;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
@@ -12,9 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,22 +22,19 @@ import net.hardcodes.neuroid.core.data.DataSet;
 import net.hardcodes.neuroid.core.events.LearningEvent;
 import net.hardcodes.neuroid.core.events.LearningEventListener;
 import net.hardcodes.neuroid.core.events.LearningEventType;
-import net.hardcodes.neuroid.core.learning.LearningRule;
 import net.hardcodes.neuroid.imgrec.ColorMode;
 import net.hardcodes.neuroid.imgrec.FractionRgbData;
 import net.hardcodes.neuroid.imgrec.ImageRecognitionHelper;
 import net.hardcodes.neuroid.imgrec.ImageRecognitionPlugin;
 import net.hardcodes.neuroid.imgrec.image.Dimension;
-import net.hardcodes.neuroid.imgrec.image.Image;
 import net.hardcodes.neuroid.imgrec.image.ImageAndroid;
-import net.hardcodes.neuroid.net.learning.AntiHebbianLearning;
 import net.hardcodes.neuroid.net.learning.MomentumBackpropagation;
 import net.hardcodes.neuroid.util.TransferFunctionType;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,12 +48,15 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
 
     private View contents;
 
-    private ProgressDialog progressDialog;
-    private FileDialog fileDialog;
+    public static volatile ProgressDialog progressDialog;
+    private FileDialog imageRecognitionFileDialog;
+    private FileDialog neuralNetworkFileDialog;
     private File path;
+    private ImageAndroid image;
 
     private EditText nnNameText;
     private EditText hiddenLayersText;
+    private EditText hiddenNeuronsText;
     private EditText sampleWidthText;
     private EditText sampleHeightText;
 
@@ -82,13 +79,39 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
 
     public ImageRecognitionManager(LayoutInflater inflater, ViewGroup parent) {
         initContents(inflater, parent);
+
+        final int w = Integer.parseInt(sampleWidthText.getText().toString());
+        final int h = Integer.parseInt(sampleHeightText.getText().toString());
+
+        progressDialog = new ProgressDialog(contents.getContext());
+        path = new File("/sdcard/ir/trening/");
+        imageRecognitionFileDialog = new FileDialog((Activity) contents.getContext(), path);
+        neuralNetworkFileDialog = new FileDialog((Activity) contents.getContext(), new File("/sdcard/"));
+
+        imageRecognitionFileDialog.setFileEndsWith(".jpg");
+        imageRecognitionFileDialog.addFileListener(new FileDialog.FileSelectedListener() {
+            public void fileSelected(File file) {
+                path = file;
+                image = ImageAndroid.padSquare(new ImageAndroid(path)).resize(w, h);
+                selectedImageView.setImageBitmap(image.getBitmap());
+            }
+        });
+
+        neuralNetworkFileDialog.setFileEndsWith(".nnn");
+        neuralNetworkFileDialog.addFileListener(new FileDialog.FileSelectedListener() {
+            public void fileSelected(File file) {
+                neuralNetwork = NeuralNetwork.createFromFile(file);
+                Toast.makeText(contents.getContext(), "Neural network loaded!", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void initContents(LayoutInflater inflater, ViewGroup parent) {
-        contents = inflater.inflate(R.layout.fragment_image_recognition, parent, false);
+        contents = inflater.inflate(R.layout.view_image_recognition, parent, false);
 
         nnNameText = (EditText) contents.findViewById(R.id.fragment_image_recognition_nn_name);
         hiddenLayersText = (EditText) contents.findViewById(R.id.fragment_image_recognition_nn_hidden);
+        hiddenNeuronsText = (EditText) contents.findViewById(R.id.fragment_image_recognition_nn_neuron);
         sampleWidthText = (EditText) contents.findViewById(R.id.fragment_image_recognition_nn_sample_width);
         sampleHeightText = (EditText) contents.findViewById(R.id.fragment_image_recognition_nn_sample_height);
 
@@ -111,10 +134,6 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
 
         selectedImageView = (ImageView) contents.findViewById(R.id.fragment_image_recognition_test_image);
         resultText = (TextView) contents.findViewById(R.id.fragment_image_recognition_test_result);
-
-        progressDialog = new ProgressDialog(contents.getContext());
-        path = new File("/sdcard/ir/trening/");
-        fileDialog = new FileDialog((Activity) contents.getContext(), path);
     }
 
     private void initSpinners(View parent) {
@@ -138,68 +157,36 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
         colorModeSpinner.setAdapter(new ArrayAdapter<>(parent.getContext(), android.R.layout.simple_spinner_item, new ArrayList<>(colorModeEntries.keySet())));
         learningRuleSpinner.setAdapter(new ArrayAdapter<>(parent.getContext(), android.R.layout.simple_spinner_item, new ArrayList<>(learningRuleEntries.keySet())));
         transferFunctionSpinner.setAdapter(new ArrayAdapter<>(parent.getContext(), android.R.layout.simple_spinner_item, new ArrayList<>(transferFunctionEntries.keySet())));
+
+        transferFunctionSpinner.setSelection(6);
     }
 
     @Override
     public void onClick(View v) {
 
-        int w = Integer.parseInt(sampleWidthText.getText().toString());
-        int h = Integer.parseInt(sampleHeightText.getText().toString());
+        final int w = Integer.parseInt(sampleWidthText.getText().toString());
+        final int h = Integer.parseInt(sampleHeightText.getText().toString());
 
         switch (v.getId()) {
             case R.id.fragment_image_recognition_test_image_select:
-                fileDialog.setFileEndsWith(".jpg");
-                fileDialog.addFileListener(new FileDialog.FileSelectedListener() {
-                    public void fileSelected(File file) {
-                        path = file;
-                        ImageAndroid imageAndroid = new ImageAndroid(path);
-                        selectedImageView.setImageBitmap(imageAndroid.getBitmap());
-                    }
-                });
-                //fileDialog.addDirectoryListener(new FileDialog.DirectorySelectedListener() {
-                //  public void directorySelected(File directory) {
-                //      Log.d(getClass().getName(), "selected dir " + directory.toString());
-                //  }
-                //});
-                //fileDialog.setSelectDirectoryOption(false);
-                fileDialog.showDialog();
+                imageRecognitionFileDialog.showDialog();
                 break;
             case R.id.fragment_image_recognition_train_start:
-                // path to image directory
-                String imageDir = Environment.getExternalStorageDirectory() + "/ir/trening/";
+                Dimension sampleSize = new Dimension(w, h);
 
-                // image names - used for output neuron labels
-                List<String> imageLabels = new ArrayList();
-                imageLabels.add("bird");
-                imageLabels.add("cat");
-                imageLabels.add("horse");
-
-                // create dataset
-                Map<String,FractionRgbData> map = null;
-                try {
-                    map = ImageRecognitionHelper.getFractionRgbDataForDirectory(new File(imageDir), new Dimension(w, h));
-                } catch (IOException e) {
-                }
-                final DataSet dataSet = ImageRecognitionHelper.createRGBTrainingSet(imageLabels, map);
-
-                // create neural network
-                List <Integer> hiddenLayers = new ArrayList<>();
-                hiddenLayers.add(Integer.parseInt(hiddenLayersText.getText().toString()));
-                neuralNetwork = ImageRecognitionHelper.createNewNeuralNetwork(nnNameText.getText().toString(),
-                        new Dimension(w, h),
-                        colorModeEntries.get(colorModeSpinner.getSelectedItem().toString()), imageLabels, hiddenLayers,
-                        transferFunctionEntries.get(transferFunctionSpinner.getSelectedItem().toString()));
-
-                // set learning rule parameters
-                MomentumBackpropagation mb = (MomentumBackpropagation) neuralNetwork.getLearningRule();
-                mb.setLearningRate(0.2);
-                mb.setMaxError(0.9);
-                mb.setMomentum(1);
-
-                mb.addListener(this);
-
+                progressDialog.setMessage("Building neural network...");
+                progressDialog.setCanceledOnTouchOutside(false);
+                progressDialog.setCancelable(false);
                 progressDialog.show();
-                neuralNetwork.learnInNewThread(dataSet);
+
+                List<Integer> hiddenLayers = new ArrayList<>();
+                for(int i = 0; i < Integer.parseInt(hiddenLayersText.getText().toString()); i++) {
+                    hiddenLayers.add(Integer.parseInt(hiddenNeuronsText.getText().toString()));
+                }
+
+                new PrepareTrainingSetAndLearnTask(nnNameText.getText().toString(), colorModeEntries.get(colorModeSpinner.getSelectedItem().toString()),
+                        transferFunctionEntries.get(transferFunctionSpinner.getSelectedItem().toString()), hiddenLayers)
+                        .executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sampleSize);
                 break;
             case R.id.fragment_image_recognition_recognize_start:
                 if (neuralNetwork == null) {
@@ -213,22 +200,88 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
 
                 try {
                     // image recognition is done here
-                    ImageAndroid imageAndroid = new ImageAndroid(path);
-                    Image img = ImageAndroid.padSquare(imageAndroid);
-                    img = img.resize(w, h);
-                    HashMap<String, Double> output = imageRecognition.recognizeImage(img); // specify some existing image file here
+                    HashMap<String, Double> output = imageRecognition.recognizeImage(image); // specify some existing image file here
+                    for (Map.Entry<String, Double> outputEntry: output.entrySet()) {
+                        outputEntry.setValue(Double.parseDouble(new DecimalFormat("#.##").format(outputEntry.getValue())));
+                    }
                     System.out.println(output.toString());
-                    resultText.setText(output.toString());
-                } catch(Exception e) {
+                    resultText.setText(output.toString().replace("{", "").replace("}", "").replace(".jpg", "").replace("=", " = ").replace(",", "\n"));
+                } catch (Exception e) {
                     Log.d("Error: ", e.getMessage(), e);
                 }
                 break;
             case R.id.fragment_image_recognition_nn_save:
-
+                neuralNetwork.save("/sdcard/" + nnNameText.getText().toString() + ".nnn");
+                Toast.makeText(contents.getContext(), "Neural network saved!", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.fragment_image_recognition_nn_load:
-
+                neuralNetworkFileDialog.showDialog();
                 break;
+        }
+    }
+
+    private class PrepareTrainingSetAndLearnTask extends AsyncTask<Dimension, String, Void> {
+
+        private String networkName;
+        private ColorMode colorMode;
+        private TransferFunctionType transferFunctionType;
+        private List<Integer> hiddenLayers;
+
+        public PrepareTrainingSetAndLearnTask(String networkName, ColorMode colorMode, TransferFunctionType transferFunctionType, List<Integer> hiddenLayers) {
+            this.networkName = networkName;
+            this.colorMode = colorMode;
+            this.transferFunctionType = transferFunctionType;
+            this.hiddenLayers = hiddenLayers;
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            progressDialog.setMessage(values[0]);
+            super.onProgressUpdate(values);
+        }
+
+        @Override
+        protected Void doInBackground(Dimension... params) {// path to image directory
+
+            File imageDir = new File(Environment.getExternalStorageDirectory() + "/ir/trening/");
+            // image names - used for output neuron labels
+            List<String> imageLabels = new ArrayList<>();
+
+            for (String image: imageDir.list()) {
+                imageLabels.add(image);
+            }
+
+            neuralNetwork = ImageRecognitionHelper.createNewNeuralNetwork(networkName,
+                    params[0], colorMode, imageLabels, hiddenLayers, transferFunctionType);
+
+            publishProgress("Preparing data set...");
+
+            // create dataset
+            Map<String, FractionRgbData> map = null;
+            try {
+                map = ImageRecognitionHelper.getFractionRgbDataForDirectory(imageDir, params[0]);
+            } catch (IOException e) {
+            }
+            final DataSet dataSet = ImageRecognitionHelper.createRGBTrainingSet(imageLabels, map);
+
+            // set learning rule parameters
+            MomentumBackpropagation mb = (MomentumBackpropagation) neuralNetwork.getLearningRule();
+            mb.setLearningRate(0.2);
+            mb.setMaxError(0.8);
+            mb.setMomentum(1);
+
+            mb.addListener(ImageRecognitionManager.this);
+
+            publishProgress("Training network...");
+            neuralNetwork.learn(dataSet);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            neuralNetwork.save("/sdcard/" + nnNameText.getText().toString() + "_autosave.nnn");
+            Toast.makeText(contents.getContext(), "Neural network trained!", Toast.LENGTH_SHORT).show();
+            super.onPostExecute(aVoid);
         }
     }
 

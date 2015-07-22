@@ -15,6 +15,8 @@
  */
 package net.hardcodes.neuroid.core;
 
+import com.google.gson.Gson;
+
 import net.hardcodes.neuroid.core.data.DataSet;
 import net.hardcodes.neuroid.core.events.NeuralNetworkEvent;
 import net.hardcodes.neuroid.core.events.NeuralNetworkEventListener;
@@ -31,12 +33,14 @@ import net.hardcodes.neuroid.util.random.WeightsRandomizer;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -636,6 +640,23 @@ public class NeuralNetwork<L extends LearningRule> implements Serializable {
                 }
             }
         }
+//        FileOutputStream out = null;
+//        try {
+//            File file = new File(filePath);
+//            Gson gson = new Gson();
+//            gson.toJson(this);
+//            out = new FileOutputStream(file);
+//            out.flush();
+//        } catch (IOException ioe) {
+//            throw new NeurophException("Could not write neural network to file!", ioe);
+//        } finally {
+//            if (out != null) {
+//                try {
+//                    out.close();
+//                } catch (IOException e) {
+//                }
+//            }
+//        }
     }
 
     /**
@@ -715,7 +736,6 @@ public class NeuralNetwork<L extends LearningRule> implements Serializable {
      */
     public static NeuralNetwork createFromFile(File file) {
         ObjectInputStream oistream = null;
-
         try {
             if (!file.exists()) {
                 throw new FileNotFoundException("Cannot find file: " + file);
@@ -739,6 +759,46 @@ public class NeuralNetwork<L extends LearningRule> implements Serializable {
                 }
             }
         }
+
+//        FileInputStream fileInputStream = null;
+//        try {
+//            if (!file.exists()) {
+//                throw new FileNotFoundException("Cannot find file: " + file);
+//            }
+//            String json = "";
+//            try {
+//                fileInputStream = new FileInputStream(file);
+//                json = convertStreamToString(fileInputStream);
+//            } catch (Exception e) {
+//                return null;
+//            }
+//
+//            Gson gson = new Gson();
+//            NeuralNetwork nnet = gson.fromJson(json, NeuralNetwork.class);
+//            return nnet;
+//
+//        } catch (IOException ioe) {
+//            throw new NeurophException("Could not read neural network file!", ioe);
+//            //ioe.printStackTrace();
+//        } finally {
+//            if (fileInputStream != null) {
+//                try {
+//                    fileInputStream.close();
+//                } catch (IOException ioe) {
+//                }
+//            }
+//        }
+    }
+
+    private static String convertStreamToString(InputStream is) throws Exception {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        StringBuilder sb = new StringBuilder();
+        String line = null;
+        while ((line = reader.readLine()) != null) {
+            sb.append(line).append("\n");
+        }
+        reader.close();
+        return sb.toString();
     }
 
     public static NeuralNetwork createFromFile(String filePath) {

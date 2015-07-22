@@ -106,16 +106,13 @@ public class ImageRecognitionPlugin extends PluginBase implements Serializable {
 		double input[];
 
 		if (this.colorMode == ColorMode.COLOR_RGB) {
-                    FractionRgbData imgRgb = new FractionRgbData(ImageSampler
-				.downSampleImage(samplingResolution, img, img.getType()));                    
+                    FractionRgbData imgRgb = new FractionRgbData(img.resize(samplingResolution.getWidth(), samplingResolution.getHeight()));
 			input = imgRgb.getFlattenedRgbValues();                        
                 } else if (this.colorMode == ColorMode.COLOR_HSL) {
-                    FractionHSLData imgHsl = new FractionHSLData(ImageSampler
-				.downSampleImage(samplingResolution, img, img.getType()));                    
+                    FractionHSLData imgHsl = new FractionHSLData(img.resize(samplingResolution.getWidth(), samplingResolution.getHeight()));
 			input = imgHsl.getFlattenedHSLValues();                                        
                 } else if (this.colorMode == ColorMode.BLACK_AND_WHITE) {
-                    FractionRgbData imgRgb = new FractionRgbData(ImageSampler
-				.downSampleImage(samplingResolution, img, img.getType()));                                        
+                    FractionRgbData imgRgb = new FractionRgbData(img.resize(samplingResolution.getWidth(), samplingResolution.getHeight()));
 			input = FractionRgbData.convertRgbInputToBinaryBlackAndWhite(imgRgb
 					.getFlattenedRgbValues());
                 } else
@@ -182,10 +179,6 @@ public class ImageRecognitionPlugin extends PluginBase implements Serializable {
 		processInput();
                 return getOutput();
         }
-        
-        public HashMap<String, Double> recognizeImage(ImageAndroid img) throws ImageSizeMismatchException {
-            return recognizeImage(new ImageAndroid(img));
-        }        
         
 //        public HashMap<String, Double> recognizeImage(Bitmap img) throws ImageSizeMismatchException {
 //            return recognizeImage(ImageFactory. new ImageAndroid(img));
