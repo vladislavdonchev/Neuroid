@@ -37,7 +37,7 @@ public class NguyenWidrowRandomizer extends RangeRandomizer {
     public void randomize(NeuralNetwork neuralNetwork) {
         super.randomize(neuralNetwork);
 
-        int inputNeuronsCount = neuralNetwork.getInputNeurons().length;
+        int inputNeuronsCount = neuralNetwork.getInputsCount();
         int hiddenNeuronsCount = 0;
 
         for (int i = 1; i < neuralNetwork.getLayersCount() - 1; i++) {

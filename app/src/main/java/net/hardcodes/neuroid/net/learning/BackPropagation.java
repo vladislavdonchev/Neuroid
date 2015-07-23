@@ -108,7 +108,7 @@ public class BackPropagation extends LMS {
      */
     protected double calculateHiddenNeuronError(Neuron neuron) {
         double deltaSum = 0d;
-        for (Connection connection : neuron.getOutConnections()) {
+        for (Connection connection : neuron.getOutputConnections()) {
             double delta = connection.getToNeuron().getError()
                     * connection.getWeight().value;
             deltaSum += delta; // weighted delta sum from the next layer

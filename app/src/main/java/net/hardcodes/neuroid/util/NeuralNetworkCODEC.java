@@ -48,7 +48,7 @@ public class NeuralNetworkCODEC {
 
 		for (Layer layer : network.getLayers()) {
 			for (Neuron neuron : layer.getNeurons()) {
-				for (Connection connection : neuron.getOutConnections()) {
+				for (Connection connection : neuron.getOutputConnections()) {
 					array[index++] = connection.getWeight().getValue();
 				}
 			}
@@ -65,7 +65,7 @@ public class NeuralNetworkCODEC {
 
 		for (Layer layer : network.getLayers()) {
 			for (Neuron neuron : layer.getNeurons()) {
-				for (Connection connection : neuron.getOutConnections()) {
+				for (Connection connection : neuron.getOutputConnections()) {
 					connection.getWeight().setValue(array[index]);
 					//connection.getWeight().setPreviousValue(array[index++]);
 				}
@@ -83,7 +83,7 @@ public class NeuralNetworkCODEC {
 
 		for (Layer layer : network.getLayers()) {
 			for (Neuron neuron : layer.getNeurons()) {
-				result+=neuron.getOutConnections().length;
+				result+=neuron.getOutputConnections().length;
 			}
 		}
 		return result;

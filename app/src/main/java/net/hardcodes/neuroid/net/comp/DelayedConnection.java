@@ -17,6 +17,7 @@
 package net.hardcodes.neuroid.net.comp;
 
 import net.hardcodes.neuroid.core.Connection;
+import net.hardcodes.neuroid.core.NeuralNetwork;
 import net.hardcodes.neuroid.core.Neuron;
 import net.hardcodes.neuroid.net.comp.neuron.DelayedNeuron;
 
@@ -73,10 +74,11 @@ public class DelayedConnection extends Connection {
 	 */
 	@Override
 	public double getInput() {
-		if (this.fromNeuron instanceof DelayedNeuron)
-			return ((DelayedNeuron) this.fromNeuron).getOutput(delay);
+		Neuron fromNeuron = NeuralNetwork.NEURON_REGISTER.get(this.fromNeuronUID);
+		if (fromNeuron instanceof DelayedNeuron)
+			return ((DelayedNeuron) fromNeuron).getOutput(delay);
 		else
-			return this.fromNeuron.getOutput();
+			return fromNeuron.getOutput();
 	}
 
 }

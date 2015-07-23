@@ -42,13 +42,13 @@ import java.util.Map;
 /**
  * Created by MnQko on 19.7.2015 г..
  */
-public class ImageRecognitionManager implements View.OnClickListener, LearningEventListener {
+public class ImageRecognitionManager implements View.OnClickListener {
 
     private NeuralNetwork neuralNetwork;
 
-    private View contents;
+    private static View contents;
 
-    public static volatile ProgressDialog progressDialog;
+    public static ProgressDialog progressDialog;
     private FileDialog imageRecognitionFileDialog;
     private FileDialog neuralNetworkFileDialog;
     private File path;
@@ -76,6 +76,8 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
     private HashMap<String, ColorMode> colorModeEntries = new HashMap<>();
     private HashMap<String, Class> learningRuleEntries = new HashMap<>();
     private HashMap<String, TransferFunctionType> transferFunctionEntries = new HashMap<>();
+
+    private boolean learning = false;
 
     public ImageRecognitionManager(LayoutInflater inflater, ViewGroup parent) {
         initContents(inflater, parent);
@@ -161,6 +163,12 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
         transferFunctionSpinner.setSelection(6);
     }
 
+    public void updateProgressDialog() {
+        if (!learning && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+    }
+
     @Override
     public void onClick(View v) {
 
@@ -173,11 +181,6 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
                 break;
             case R.id.fragment_image_recognition_train_start:
                 Dimension sampleSize = new Dimension(w, h);
-
-                progressDialog.setMessage("Building neural network...");
-                progressDialog.setCanceledOnTouchOutside(false);
-                progressDialog.setCancelable(false);
-                progressDialog.show();
 
                 List<Integer> hiddenLayers = new ArrayList<>();
                 for(int i = 0; i < Integer.parseInt(hiddenLayersText.getText().toString()); i++) {
@@ -202,7 +205,7 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
                     // image recognition is done here
                     HashMap<String, Double> output = imageRecognition.recognizeImage(image); // specify some existing image file here
                     for (Map.Entry<String, Double> outputEntry: output.entrySet()) {
-                        outputEntry.setValue(Double.parseDouble(new DecimalFormat("#.##").format(outputEntry.getValue())));
+                        outputEntry.setValue(Double.parseDouble(new DecimalFormat("#.#####").format(outputEntry.getValue())));
                     }
                     System.out.println(output.toString());
                     resultText.setText(output.toString().replace("{", "").replace("}", "").replace(".jpg", "").replace("=", " = ").replace(",", "\n"));
@@ -232,6 +235,16 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
             this.colorMode = colorMode;
             this.transferFunctionType = transferFunctionType;
             this.hiddenLayers = hiddenLayers;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            progressDialog.setMessage("Building neural network...");
+            progressDialog.setCanceledOnTouchOutside(false);
+            progressDialog.setCancelable(false);
+            progressDialog.show();
+            learning = true;
+            super.onPreExecute();
         }
 
         @Override
@@ -270,8 +283,6 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
             mb.setMaxError(0.8);
             mb.setMomentum(1);
 
-            mb.addListener(ImageRecognitionManager.this);
-
             publishProgress("Training network...");
             neuralNetwork.learn(dataSet);
             return null;
@@ -281,6 +292,9 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
         protected void onPostExecute(Void aVoid) {
             neuralNetwork.save("/sdcard/" + nnNameText.getText().toString() + "_autosave.nnn");
             Toast.makeText(contents.getContext(), "Neural network trained!", Toast.LENGTH_SHORT).show();
+
+            progressDialog.dismiss();
+            learning = false;
             super.onPostExecute(aVoid);
         }
     }
@@ -289,10 +303,28 @@ public class ImageRecognitionManager implements View.OnClickListener, LearningEv
         return contents;
     }
 
-    @Override
-    public void handleLearningEvent(LearningEvent event) {
-        if (event.getEventType().equals(LearningEventType.LEARNING_STOPPED)) {
-            progressDialog.dismiss();
+    private static class UpdateProgressDialogTextRunnable implements Runnable {
+
+        private String text;
+
+        public UpdateProgressDialogTextRunnable(String text) {
+            this.text = text;
         }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+
+        @Override
+        public void run() {
+            progressDialog.setMessage(text);
+        }
+    }
+
+    private static UpdateProgressDialogTextRunnable updateProgressDialogTextRunnable = new UpdateProgressDialogTextRunnable("");
+
+    public static void updateProgressDialogText(String text) {
+        updateProgressDialogTextRunnable.setText(text);
+        ((Activity) contents.getContext()).runOnUiThread(updateProgressDialogTextRunnable);
     }
 }

@@ -121,6 +121,9 @@ public class DemoActivity extends Activity
          * Returns a new instance of this fragment for the given section
          * number.
          */
+
+        private ImageRecognitionManager imageRecognitionManager;
+
         public static PlaceholderFragment newInstance(int sectionNumber) {
             PlaceholderFragment fragment = new PlaceholderFragment();
             Bundle args = new Bundle();
@@ -133,12 +136,23 @@ public class DemoActivity extends Activity
         }
 
         @Override
+        public void onResume() {
+            if (imageRecognitionManager != null) {
+                imageRecognitionManager.updateProgressDialog();
+            }
+            super.onResume();
+        }
+
+        @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_demo, container, false);
             switch (getArguments().getInt(ARG_SECTION_NUMBER)) {
                 case 1:
-                    return new ImageRecognitionManager(inflater, container).getContents();
+                    if (imageRecognitionManager == null) {
+                        imageRecognitionManager = new ImageRecognitionManager(inflater, container);
+                    }
+                    return imageRecognitionManager.getContents();
             }
             return rootView;
         }

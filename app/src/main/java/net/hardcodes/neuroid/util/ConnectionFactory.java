@@ -16,6 +16,8 @@
 
 package net.hardcodes.neuroid.util;
 
+import android.app.Application;
+
 import net.hardcodes.neuroid.core.Connection;
 import net.hardcodes.neuroid.core.Layer;
 import net.hardcodes.neuroid.core.Neuron;
@@ -102,10 +104,9 @@ public class ConnectionFactory {
      *            layer to connect to
      */
     public static void fullConnect(Layer fromLayer, Layer toLayer) {
-        int lfn = 0;
         int ltn = 0;
         for (Neuron fromNeuron : fromLayer.getNeurons()) {
-            lfn++;
+            ImageRecognitionManager.updateProgressDialogText(ltn + "/" + fromLayer.getNeuronsCount() * toLayer.getNeuronsCount() + " connections ready...");
             for (Neuron toNeuron : toLayer.getNeurons()) {
                 ltn++;
                 createConnection(fromNeuron, toNeuron);

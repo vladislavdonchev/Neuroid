@@ -36,13 +36,13 @@ public class Connection implements Serializable {
      * From neuron for this connection (source neuron).
      * This connection is output connection for from neuron.
      */
-    protected Neuron fromNeuron;
+    protected String fromNeuronUID;
 
     /**
      * To neuron for this connection (target, destination neuron)
      * This connection is input connection for to neuron.
      */
-    protected Neuron toNeuron;
+    protected String toNeuronUID;
     
     /**
      * Weight for this connection
@@ -60,13 +60,13 @@ public class Connection implements Serializable {
         if (fromNeuron == null) {
             throw new IllegalArgumentException("From neuron in connection cant be null !");
         } else {
-            this.fromNeuron = fromNeuron;
+            this.fromNeuronUID = fromNeuron.getUID();
         }
 
         if (toNeuron == null) {
             throw new IllegalArgumentException("To neuron in connection cant be null!");
         } else {
-            this.toNeuron = toNeuron;
+            this.toNeuronUID = toNeuron.getUID();
         }
 
         this.weight = new Weight();
@@ -84,13 +84,13 @@ public class Connection implements Serializable {
         if (fromNeuron == null) {
             throw new IllegalArgumentException("From neuron in connection cant be null !");
         } else {
-            this.fromNeuron = fromNeuron;
+            this.fromNeuronUID = fromNeuron.getUID();
         }
 
         if (toNeuron == null) {
             throw new IllegalArgumentException("To neuron in connection cant be null!");
         } else {
-            this.toNeuron = toNeuron;
+            this.toNeuronUID = toNeuron.getUID();
         }
         
         if (weight == null) {
@@ -113,13 +113,13 @@ public class Connection implements Serializable {
         if (fromNeuron == null) {
             throw new IllegalArgumentException("From neuron in connection cant be null !");
         } else {
-            this.fromNeuron = fromNeuron;
+            this.fromNeuronUID = fromNeuron.getUID();
         }
 
         if (toNeuron == null) {
             throw new IllegalArgumentException("To neuron in connection cant be null!");
         } else {
-            this.toNeuron = toNeuron;
+            this.toNeuronUID = toNeuron.getUID();
         }
         
         this.weight = new Weight(weightVal);
@@ -153,7 +153,7 @@ public class Connection implements Serializable {
      * @return input received through this connection
      */
     public double getInput() {
-        return this.fromNeuron.getOutput();
+        return NeuralNetwork.NEURON_REGISTER.get(fromNeuronUID).getOutput();
     }
 
     /**
@@ -162,7 +162,7 @@ public class Connection implements Serializable {
      * @return weighted input received through this connection
      */
     public double getWeightedInput() {
-        return this.fromNeuron.getOutput() * weight.value;
+        return NeuralNetwork.NEURON_REGISTER.get(fromNeuronUID).getOutput() * weight.value;
     }
 
     /**
@@ -170,7 +170,7 @@ public class Connection implements Serializable {
      * @return from neuron for this connection
      */
     public Neuron getFromNeuron() {
-        return fromNeuron;
+        return NeuralNetwork.NEURON_REGISTER.get(fromNeuronUID);
     }
 
     /**
@@ -181,7 +181,7 @@ public class Connection implements Serializable {
         if (fromNeuron == null) {
             throw new IllegalArgumentException("From neuron in connection cant be null!");
         } else {
-            this.fromNeuron = fromNeuron;
+            this.fromNeuronUID = fromNeuron.getUID();
         }
     }
 
@@ -190,7 +190,7 @@ public class Connection implements Serializable {
      * @return neuron to set as to neuron
      */
     public Neuron getToNeuron() {
-        return toNeuron;
+        return NeuralNetwork.NEURON_REGISTER.get(toNeuronUID);
     }
 
     /**
@@ -201,7 +201,7 @@ public class Connection implements Serializable {
         if (toNeuron == null) {
             throw new IllegalArgumentException("From neuron in connection cant be null!");
         } else {
-            this.toNeuron = toNeuron;
+            this.toNeuronUID = toNeuron.getUID();
         }
     }
 }

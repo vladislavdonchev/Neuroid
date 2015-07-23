@@ -1,12 +1,12 @@
 /**
  * Copyright 2014 Neuroph Project http://neuroph.sourceforge.net
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,6 +22,7 @@ import net.hardcodes.neuroid.util.NeuronProperties;
 import net.hardcodes.neuroid.util.NeurophArrayList;
 
 import java.io.Serializable;
+import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 
 /**
@@ -35,6 +36,11 @@ import java.util.concurrent.ForkJoinPool;
  */
 public class Layer implements Serializable {
 
+    private final String UID = UUID.randomUUID().toString();
+
+    public String getUID() {
+        return UID;
+    }
 
     /**
      * The class fingerprint that is set to indicate serialization compatibility
@@ -45,12 +51,12 @@ public class Layer implements Serializable {
     /**
      * Parent neural network - to which this layer belongs
      */
-    private NeuralNetwork parentNetwork;
+    private String parentNetworkUID;
 
     /**
      * Collection of neurons (Neuron instances)
      */
-    protected NeurophArrayList<Neuron> neurons;
+    protected NeurophArrayList<String> neuronUIDs;
 
     /**
      * Label for this layer
@@ -61,16 +67,16 @@ public class Layer implements Serializable {
      * Creates an instance of empty Layer
      */
     public Layer() {
-        neurons = new NeurophArrayList(Neuron.class);
+        neuronUIDs = new NeurophArrayList(String.class);
     }
-    
+
     /**
      * Creates an instance of empty Layer for specified number of neurons
      * @param neuronsCount number of neurons in this layer
      */
     public Layer(int neuronsCount) {
-       neurons = new NeurophArrayList(Neuron.class, neuronsCount);
-    }    
+        neuronUIDs = new NeurophArrayList(String.class, neuronsCount);
+    }
 
     /**
      * Creates an instance of Layer with the specified number of neurons with
@@ -80,7 +86,7 @@ public class Layer implements Serializable {
      * @param neuronProperties properties of neurons in layer
      */
     public Layer(int neuronsCount, NeuronProperties neuronProperties) {
-        neurons = new NeurophArrayList(Neuron.class, neuronsCount);
+        neuronUIDs = new NeurophArrayList(String.class, neuronsCount);
 
         for (int i = 0; i < neuronsCount; i++) {
             Neuron neuron = NeuronFactory.createNeuron(neuronProperties);
@@ -94,16 +100,7 @@ public class Layer implements Serializable {
      * @param parent parent network
      */
     public final void setParentNetwork(NeuralNetwork parent) {
-        this.parentNetwork = parent;
-    }
-
-    /**
-     * Returns reference to parent network
-     *
-     * @return reference on parent neural network
-     */
-    public final NeuralNetwork getParentNetwork() {
-        return this.parentNetwork;
+        this.parentNetworkUID = parent.getUID();
     }
 
     /**
@@ -112,7 +109,13 @@ public class Layer implements Serializable {
      * @return array of neurons in this layer
      */
     public final Neuron[] getNeurons() {
-        return neurons.asArray();
+        Neuron[] neurons = new Neuron[neuronUIDs.size()];
+        int i = 0;
+        for (String neuronUID : neuronUIDs.asArray()) {
+            neurons[i] = NeuralNetwork.NEURON_REGISTER.get(neuronUID);
+            i++;
+        }
+        return neurons;
     }
 
     /**
@@ -130,11 +133,12 @@ public class Layer implements Serializable {
         neuron.setParentLayer(this);
 
         // add new neuron at the end of the array
-        neurons.add(neuron);
-        
+        neuronUIDs.add(neuron.getUID());
+        NeuralNetwork.NEURON_REGISTER.put(neuron.getUID(), neuron);
+
         // notify network listeners that neuron has been added
-        if (parentNetwork != null)
-            parentNetwork.fireNetworkEvent(new NeuralNetworkEvent(this, NeuralNetworkEventType.NEURON_ADDED));                
+        if (parentNetworkUID != null)
+            NeuralNetwork.fireNetworkEvent(parentNetworkUID, new NeuralNetworkEvent(this, NeuralNetworkEventType.NEURON_ADDED));
     }
 
     /**
@@ -142,7 +146,7 @@ public class Layer implements Serializable {
      *
      * Throws IllegalArgumentException if neuron is null, or index is
      * illegal value (index<0 or index>neuronsCount)      
-     * 
+     *
      * @param neuron neuron to add
      * @param index index position at which neuron should be added
      */
@@ -153,14 +157,16 @@ public class Layer implements Serializable {
         }
 
         // add neuron to this layer
-        neurons.add(index, neuron);        
-        
+        neuronUIDs.add(index, neuron.getUID());
+        NeuralNetwork.NEURON_REGISTER.put(neuron.getUID(), neuron);
+
+
         // set neuron's parent layer to this layer
         neuron.setParentLayer(this);
-        
+
         // notify network listeners that neuron has been added
-        if (parentNetwork != null)
-            parentNetwork.fireNetworkEvent(new NeuralNetworkEvent(this, NeuralNetworkEventType.NEURON_ADDED));                        
+        if (parentNetworkUID != null)
+            NeuralNetwork.fireNetworkEvent(parentNetworkUID, new NeuralNetworkEvent(this, NeuralNetworkEventType.NEURON_ADDED));
     }
 
     /**
@@ -174,17 +180,19 @@ public class Layer implements Serializable {
         if (neuron == null) {
             throw new IllegalArgumentException("Neuron cant be null!");
         }
-        
-        // new neuron at specified index position        
-        neurons.set(index, neuron);
-        
+
+        // new neuron at specified index position
+        NeuralNetwork.NEURON_REGISTER.remove(neuronUIDs.get(index));
+        neuronUIDs.set(index, neuron.getUID());
+        NeuralNetwork.NEURON_REGISTER.put(neuron.getUID(), neuron);
+
         // set neuron's parent layer to this layer                        
-        neuron.setParentLayer(this);       
-        
+        neuron.setParentLayer(this);
+
         // notify network listeners that neuron has been added
-        if (parentNetwork != null)
-            parentNetwork.fireNetworkEvent(new NeuralNetworkEvent(this, NeuralNetworkEventType.NEURON_ADDED));                        
-        
+        if (parentNetworkUID != null)
+            NeuralNetwork.fireNetworkEvent(parentNetworkUID, new NeuralNetworkEvent(this, NeuralNetworkEventType.NEURON_ADDED));
+
     }
 
     /**
@@ -203,22 +211,26 @@ public class Layer implements Serializable {
      * @param index index position of neuron to remove
      */
     public final void removeNeuronAt(int index) {
-        Neuron neuron = neurons.get(index);
+        Neuron neuron = NeuralNetwork.NEURON_REGISTER.get(neuronUIDs.get(index));
         neuron.setParentLayer(null);
         neuron.removeAllConnections(); // why we're doing this here? maybe we shouldnt
-        neurons.remove(index);                
-        
+        NeuralNetwork.NEURON_REGISTER.remove(neuronUIDs.get(index));
+        neuronUIDs.remove(index);
+
         // notify listeners that neuron has been removed
-        if (parentNetwork != null)
-            parentNetwork.fireNetworkEvent(new NeuralNetworkEvent(this, NeuralNetworkEventType.NEURON_REMOVED));                        
+        if (parentNetworkUID != null)
+            NeuralNetwork.fireNetworkEvent(parentNetworkUID, new NeuralNetworkEvent(this, NeuralNetworkEventType.NEURON_REMOVED));
     }
 
     public final void removeAllNeurons() {
-        neurons.clear();
-        
+        for (String neuronUID: neuronUIDs.asArray()) {
+            NeuralNetwork.NEURON_REGISTER.remove(neuronUID);
+        }
+        neuronUIDs.clear();
+
         // notify listeners that neurons has been removed
-        if (parentNetwork != null)
-            parentNetwork.fireNetworkEvent(new NeuralNetworkEvent(this, NeuralNetworkEventType.NEURON_REMOVED));                                
+        if (parentNetworkUID != null)
+            NeuralNetwork.fireNetworkEvent(parentNetworkUID, new NeuralNetworkEvent(this, NeuralNetworkEventType.NEURON_REMOVED));
     }
 
     /**
@@ -228,7 +240,7 @@ public class Layer implements Serializable {
      * @return neuron at specified index position
      */
     public Neuron getNeuronAt(int index) {
-        return neurons.get(index);
+        return  NeuralNetwork.NEURON_REGISTER.get(neuronUIDs.get(index));
     }
 
     /**
@@ -238,7 +250,7 @@ public class Layer implements Serializable {
      * @return index position of specified neuron
      */
     public int indexOf(Neuron neuron) {
-        return neurons.indexOf(neuron);
+        return neuronUIDs.indexOf(neuron.getUID());
     }
 
     /**
@@ -247,8 +259,9 @@ public class Layer implements Serializable {
      * @return number of neurons in this layer
      */
     public int getNeuronsCount() {
-        return neurons.size();
+        return neuronUIDs.size();
     }
+
     static final ForkJoinPool mainPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
 
     /**
@@ -256,8 +269,8 @@ public class Layer implements Serializable {
      */
     public void calculate() {
 
-        for (Neuron neuron : this.neurons.asArray()) { // use directly underlying array since its faster
-            neuron.calculate();
+        for (String neuronUID : this.neuronUIDs.asArray()) { // use directly underlying array since its faster
+            NeuralNetwork.NEURON_REGISTER.get(neuronUID).calculate();
         }
 
 //        mainPool.invokeAll(Arrays.asList(neurons.asArray()));
@@ -267,8 +280,8 @@ public class Layer implements Serializable {
      * Resets the activation and input levels for all neurons in this layer
      */
     public void reset() {
-        for (Neuron neuron : this.neurons) {
-            neuron.reset();
+        for (String neuronUID : this.neuronUIDs.asArray()) { // use directly underlying array since its faster
+            NeuralNetwork.NEURON_REGISTER.get(neuronUID).reset();
         }
     }
 
@@ -278,8 +291,8 @@ public class Layer implements Serializable {
      * @param value the weight value
      */
     public void initializeWeights(double value) {
-        for (Neuron neuron : this.neurons) {
-            neuron.initializeWeights(value);
+        for (String neuronUID : this.neuronUIDs.asArray()) { // use directly underlying array since its faster
+            NeuralNetwork.NEURON_REGISTER.get(neuronUID).initializeWeights(value);
         }
     }
 
@@ -300,9 +313,9 @@ public class Layer implements Serializable {
     public void setLabel(String label) {
         this.label = label;
     }
-    
+
     public boolean isEmpty() {
-        return neurons.isEmpty();
+        return neuronUIDs.isEmpty();
     }
 
 }
